@@ -4,9 +4,10 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::{debug, error, info, warn};
 use tracing_subscriber::filter::LevelFilter;
+use crate::apps::App;
 
 mod configuration;
-mod qbittorrent;
+mod apps;
 
 const LINE_FEED: char = '\n';
 const LOG_LEVEL: &str = "LOG_LEVEL";
@@ -15,12 +16,12 @@ const LOG_LEVEL: &str = "LOG_LEVEL";
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt().with_max_level(log_level()).init();
     let client = Client::builder().cookie_store(true).build()?;
-    let config = Configuration::new();
-    run(&client, &config).await;
+    run(&client).await;
     Ok(())
 }
 
-async fn run(client: &Client, config: &Configuration) {
+async fn run(client: &Client) {
+    let config = App::init();
     let mut last_port = 0;
     let mut logged_in = login(client, config).await;
 
