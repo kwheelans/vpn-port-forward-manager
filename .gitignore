@@ -1,0 +1,8 @@
+# IDE
+.idea
+.vscode
+
+test_data
+target
+**/*.rs.bk
+**/mutants.out*/

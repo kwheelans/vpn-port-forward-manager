@@ -1,0 +1,21 @@
+[package]
+name = "vpn-port-forward-manager"
+version = "0.1.0"
+edition = "2024"
+authors = ["Kevin Wheelans <kevin.wheelans@proton.me>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/kwheelans/vpn-port-forward-manager"
+
+[dependencies]
+anyhow = { version = "1" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tracing = {  version = "0.1" }
+tracing-subscriber = {  version = "0.3" }
+reqwest = { version = "0.13", features = ["form", "cookies"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = "z"
+strip = "symbols"
