@@ -6,6 +6,7 @@ use tracing::{debug, error, info, warn};
 use tracing_subscriber::filter::LevelFilter;
 
 mod configuration;
+mod qbittorrent;
 
 const LINE_FEED: char = '\n';
 const LOG_LEVEL: &str = "LOG_LEVEL";
@@ -49,8 +50,8 @@ async fn run(client: &Client, config: &Configuration) {
 /// Attempts to log in and returns true if successful
 async fn login(client: &Client, config: &Configuration) -> bool {
     let response = client
-        .post(config.qb_login_endpoint())
-        .form(&config.qb_login_parameters())
+        .post(config.login_endpoint())
+        .form(&config.login_parameters())
         .send()
         .await;
 
@@ -75,7 +76,7 @@ async fn login(client: &Client, config: &Configuration) -> bool {
 async fn set_qb_port_value(client: &Client, config: &Configuration, port: u16) -> bool {
     let json = get_list_port_json(port);
     let response = client
-        .post(config.qb_set_preference_endpoint())
+        .post(config.set_preference_endpoint())
         .form(&json)
         .send()
         .await;
