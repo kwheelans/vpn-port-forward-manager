@@ -9,10 +9,9 @@ repository = "https://github.com/kwheelans/vpn-port-forward-manager"
 
 [dependencies]
 anyhow = { version = "1" }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tracing = {  version = "0.1" }
 tracing-subscriber = {  version = "0.3" }
-reqwest = { version = "0.13", features = ["form", "cookies"] }
+reqwest = { version = "0.13", features = ["blocking", "form", "cookies"] }
 strum = { version = "0.27", features = ["derive"]}
 
 [profile.release]

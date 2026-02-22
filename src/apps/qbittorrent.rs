@@ -1,13 +1,16 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::time::Duration;
 use crate::apps::{App, Protocol};
+use reqwest::blocking::Client;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+use tracing::{debug, error, info, warn};
 
 // API Endpoints
 const QB_LOGIN_ENDPOINT: &str = "/api/v2/auth/login";
 const QB_SET_PREFERENCES_ENDPOINT: &str = "/api/v2/app/setPreferences";
 
 pub struct Qbittorrent {
+    pub client: Client,
     pub protocol: Protocol,
     pub hostname: String,
     pub port: u16,
@@ -18,33 +21,90 @@ pub struct Qbittorrent {
 }
 
 impl App for Qbittorrent {
-    fn login(&self) {
-        todo!()
+    fn login(&self) -> bool {
+        let client = &self.client;
+        let response = client
+            .post(self.login_endpoint())
+            .form(&self.login_parameters())
+            .send();
+
+        match response {
+            Ok(r) => {
+                let status = r.status();
+                if status.is_success() {
+                    debug!("Login successful");
+                    true
+                } else {
+                    warn!("login request failed with status code: {}", status);
+                    false
+                }
+            }
+            Err(e) => {
+                error!("Login request error: {:?}", e);
+                false
+            }
+        }
     }
 
-    fn set_port(&self) {
-        todo!()
+    fn set_port(&self, port: u16) -> bool {
+        self.set_port_value(port)
+    }
+
+    fn interval(&self) -> Duration {
+        self.interval
+    }
+
+    fn port_forward_path(&self) -> &Path {
+        self.port_forward_path.as_path()
     }
 }
 
+impl Qbittorrent {
+    fn login_parameters(&self) -> HashMap<String, String> {
+        let mut params = HashMap::new();
+        params.insert("username".into(), self.username.clone());
+        params.insert("password".into(), self.password.clone());
+        params
+    }
 
-pub fn qb_login_parameters(username: &str, password: &str) -> HashMap<String, String> {
-    let mut params = HashMap::new();
-    params.insert("username".into(), username.into());
-    params.insert("password".into(), password.into());
-    params
-}
+    fn login_endpoint(&self) -> String {
+        format!(
+            "{}://{}:{}{}",
+            self.protocol, self.hostname, self.port, QB_LOGIN_ENDPOINT
+        )
+    }
 
-pub fn qb_login_endpoint(protocol: Protocol, hostname: &str, port: u16) -> String {
-    format!(
-        "{}://{}:{}{}",
-        protocol, hostname, port, QB_LOGIN_ENDPOINT
-    )
-}
+    fn set_preference_endpoint(&self) -> String {
+        format!(
+            "{}://{}:{}{}",
+            self.protocol, self.hostname, self.port, QB_SET_PREFERENCES_ENDPOINT
+        )
+    }
 
-pub fn qb_set_preference_endpoint(protocol: Protocol, hostname: &str, port: u16) -> String {
-    format!(
-        "{}://{}:{}{}",
-        protocol, hostname, port, QB_SET_PREFERENCES_ENDPOINT
-    )
+    /// Attempts to set port value and returns true if successful
+    fn set_port_value(&self, port: u16) -> bool {
+        let client = &self.client;
+        let json = HashMap::from([("json".to_string(), format!("{{listen_port:{} }}", port))]);
+        let response = client
+            .post(self.set_preference_endpoint())
+            .form(&json)
+            .send();
+
+        match response {
+            Ok(r) => {
+                let status = r.status();
+                if status.is_success() {
+                    info!("Port updated to {}", port);
+                    true
+                } else {
+                    warn!("Port update request failed with status code: {}", status);
+                    false
+                }
+            }
+            Err(e) => {
+                error!("Port update request error: {}", e);
+                false
+            }
+        }
+    }
 }

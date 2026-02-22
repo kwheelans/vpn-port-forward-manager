@@ -1,10 +1,14 @@
 mod qbittorrent;
 
+use crate::LINE_FEED;
+use anyhow::Context;
+use reqwest::blocking::Client;
+use std::path::Path;
 use std::str::FromStr;
+use std::thread::sleep;
 use std::time::Duration;
 use strum::{Display, EnumString};
-use tracing::warn;
-use crate::apps::Application::QBittorrent;
+use tracing::{debug, warn};
 
 // Environment Variables
 const APPLICATION: &str = "APPLICATION";
@@ -24,56 +28,28 @@ const PORT_FORWARD_PATH_DEFAULT: &str = "/tmp/gluetun/forwarded_port";
 const CHECK_INTERVAL_DEFAULT: u64 = 20;
 
 pub trait App {
-    fn login(&self);
-    fn set_port(&self);
-    fn init() -> Box<dyn App> where Self: Sized {
-        let application =
-            Application::from_str(std::env::var(APPLICATION).unwrap_or_default().as_str())
-                .unwrap_or_default();
-        let protocol = Protocol::from_str(std::env::var(PROTOCOL).unwrap_or_default().as_str())
-            .unwrap_or_default();
-        let port = match std::env::var(PORT) {
-            Ok(value) => value.parse::<u16>().unwrap_or_else(|error| {
-                warn!("Could not parse: {} -> {}", value, error);
-                application.default_port()
-            }),
-            _ => application.default_port(),
-        };
-        let interval = Duration::from_secs(match std::env::var(CHECK_INTERVAL) {
-            Ok(value) => value.parse::<u64>().unwrap_or_else(|error| {
-                warn!("Could not parse: {} -> {}", value, error);
-                CHECK_INTERVAL_DEFAULT
-            }),
-            _ => CHECK_INTERVAL_DEFAULT,
-        });
-        let hostname = std::env::var(HOST).unwrap_or(HOST_DEFAULT.into());
-        let username = std::env::var(USER).unwrap_or(USER_DEFAULT.into());
-        let password = std::env::var(PASSWORD).unwrap_or(PASSWORD_DEFAULT.into());
-        let port_forward_path =
-            std::env::var(PORT_FORWARD_PATH).unwrap_or(PORT_FORWARD_PATH_DEFAULT.into()).into();
-        
-        match application {
-            Application::QBittorrent => {
-                Box::new(qbittorrent::Qbittorrent {
-                    protocol,
-                    port,
-                    hostname,
-                    username,
-                    password,
-                    port_forward_path,
-                    interval,
-                    
-                })
-            }
-            Application::Deluge => todo!(""),
+    fn login(&self) -> bool;
+    fn set_port(&self, port: u16) -> bool;
+    fn interval(&self) -> Duration;
+    fn port_forward_path(&self) -> &Path;
+    fn wait(&self) {
+        sleep(self.interval());
+    }
+
+    fn check_port_forward(&self) -> anyhow::Result<u16> {
+        if !self.port_forward_path().try_exists()? {
+            warn!("Path to port forward value does nto exist");
         }
+        let value = std::fs::read_to_string(self.port_forward_path())?;
+        debug!("{:?}", value);
+        let value = value.trim_matches(LINE_FEED);
+        Ok(value.parse::<u16>()?)
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Default, Clone, Copy, Display, EnumString)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Display, EnumString)]
 #[strum(ascii_case_insensitive)]
 pub enum Application {
-    #[default]
     QBittorrent,
     Deluge,
 }
@@ -93,4 +69,47 @@ impl Application {
             Application::Deluge => 8112,
         }
     }
+}
+
+pub fn app_init() -> anyhow::Result<Box<dyn App>> {
+    let client = Client::builder().cookie_store(true).build()?;
+    let application =
+        Application::from_str(std::env::var(APPLICATION).unwrap_or_default().as_str())
+            .with_context(|| format!("{APPLICATION} value is not valid"))?;
+    let protocol = Protocol::from_str(std::env::var(PROTOCOL).unwrap_or_default().as_str())
+        .unwrap_or_default();
+    let port = match std::env::var(PORT) {
+        Ok(value) => value.parse::<u16>().unwrap_or_else(|error| {
+            warn!("Could not parse: {} -> {}", value, error);
+            application.default_port()
+        }),
+        _ => application.default_port(),
+    };
+    let interval = Duration::from_secs(match std::env::var(CHECK_INTERVAL) {
+        Ok(value) => value.parse::<u64>().unwrap_or_else(|error| {
+            warn!("Could not parse: {} -> {}", value, error);
+            CHECK_INTERVAL_DEFAULT
+        }),
+        _ => CHECK_INTERVAL_DEFAULT,
+    });
+    let hostname = std::env::var(HOST).unwrap_or(HOST_DEFAULT.into());
+    let username = std::env::var(USER).unwrap_or(USER_DEFAULT.into());
+    let password = std::env::var(PASSWORD).unwrap_or(PASSWORD_DEFAULT.into());
+    let port_forward_path = std::env::var(PORT_FORWARD_PATH)
+        .unwrap_or(PORT_FORWARD_PATH_DEFAULT.into())
+        .into();
+
+    Ok(match application {
+        Application::QBittorrent => Box::new(qbittorrent::Qbittorrent {
+            client,
+            protocol,
+            port,
+            hostname,
+            username,
+            password,
+            port_forward_path,
+            interval,
+        }),
+        Application::Deluge => todo!("Implement Deluge"),
+    })
 }
