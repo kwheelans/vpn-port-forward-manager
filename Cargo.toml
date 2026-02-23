@@ -3,6 +3,7 @@ name = "vpn-port-forward-manager"
 version = "0.1.0"
 edition = "2024"
 authors = ["Kevin Wheelans <kevin.wheelans@proton.me>"]
+description = "Updates the listen port for the supported applications to the port forward by the VPN provider"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/kwheelans/vpn-port-forward-manager"
