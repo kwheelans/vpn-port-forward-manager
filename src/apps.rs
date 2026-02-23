@@ -1,3 +1,4 @@
+mod deluge;
 mod qbittorrent;
 
 use crate::LINE_FEED;
@@ -28,7 +29,10 @@ const PORT_FORWARD_PATH_DEFAULT: &str = "/tmp/gluetun/forwarded_port";
 const CHECK_INTERVAL_DEFAULT: u64 = 20;
 
 pub trait App {
+    /// Attempts to log in to host and returns true if successful
     fn login(&self) -> bool;
+
+    /// Attempts to set port value and returns true if successful
     fn set_port(&self, port: u16) -> bool;
     fn interval(&self) -> Duration;
     fn port_forward_path(&self) -> &Path;
@@ -110,6 +114,18 @@ pub fn app_init() -> anyhow::Result<Box<dyn App>> {
             port_forward_path,
             interval,
         }),
-        Application::Deluge => todo!("Implement Deluge"),
+        Application::Deluge => Box::new(deluge::Deluge {
+            client,
+            protocol,
+            port,
+            hostname,
+            password,
+            port_forward_path,
+            interval,
+        }),
     })
+}
+
+fn endpoint(protocol: Protocol, hostname: &str, port: u16, endpoint: &str) -> String {
+    format!("{}://{}:{}{}", protocol, hostname, port, endpoint)
 }

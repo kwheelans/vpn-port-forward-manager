@@ -4,13 +4,14 @@ use tracing::{debug, error};
 use tracing_subscriber::filter::LevelFilter;
 
 mod apps;
+mod rpc;
 
 const LINE_FEED: char = '\n';
 const LOG_LEVEL: &str = "LOG_LEVEL";
 
 fn main() {
     tracing_subscriber::fmt().with_max_level(log_level()).init();
-    if let Err(error)= run() {
+    if let Err(error) = run() {
         error!("{error}")
     }
 }

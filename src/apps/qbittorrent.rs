@@ -1,4 +1,4 @@
-use crate::apps::{App, Protocol};
+use crate::apps::{App, Protocol, endpoint};
 use reqwest::blocking::Client;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -32,57 +32,24 @@ impl App for Qbittorrent {
             Ok(r) => {
                 let status = r.status();
                 if status.is_success() {
-                    debug!("Login successful");
+                    debug!("qBitTorrent login successful");
                     true
                 } else {
-                    warn!("login request failed with status code: {}", status);
+                    warn!(
+                        "qBitTorrent login request failed with status code: {}",
+                        status
+                    );
                     false
                 }
             }
             Err(e) => {
-                error!("Login request error: {:?}", e);
+                error!("qBitTorrent login request error: {:?}", e);
                 false
             }
         }
     }
 
     fn set_port(&self, port: u16) -> bool {
-        self.set_port_value(port)
-    }
-
-    fn interval(&self) -> Duration {
-        self.interval
-    }
-
-    fn port_forward_path(&self) -> &Path {
-        self.port_forward_path.as_path()
-    }
-}
-
-impl Qbittorrent {
-    fn login_parameters(&self) -> HashMap<String, String> {
-        let mut params = HashMap::new();
-        params.insert("username".into(), self.username.clone());
-        params.insert("password".into(), self.password.clone());
-        params
-    }
-
-    fn login_endpoint(&self) -> String {
-        format!(
-            "{}://{}:{}{}",
-            self.protocol, self.hostname, self.port, QB_LOGIN_ENDPOINT
-        )
-    }
-
-    fn set_preference_endpoint(&self) -> String {
-        format!(
-            "{}://{}:{}{}",
-            self.protocol, self.hostname, self.port, QB_SET_PREFERENCES_ENDPOINT
-        )
-    }
-
-    /// Attempts to set port value and returns true if successful
-    fn set_port_value(&self, port: u16) -> bool {
         let client = &self.client;
         let json = HashMap::from([("json".to_string(), format!("{{listen_port:{} }}", port))]);
         let response = client
@@ -106,5 +73,40 @@ impl Qbittorrent {
                 false
             }
         }
+    }
+
+    fn interval(&self) -> Duration {
+        self.interval
+    }
+
+    fn port_forward_path(&self) -> &Path {
+        self.port_forward_path.as_path()
+    }
+}
+
+impl Qbittorrent {
+    fn login_parameters(&self) -> HashMap<String, String> {
+        HashMap::from([
+            ("username".into(), self.username.clone()),
+            ("password".into(), self.password.clone()),
+        ])
+    }
+
+    fn login_endpoint(&self) -> String {
+        endpoint(
+            self.protocol,
+            self.hostname.as_str(),
+            self.port,
+            QB_LOGIN_ENDPOINT,
+        )
+    }
+
+    fn set_preference_endpoint(&self) -> String {
+        endpoint(
+            self.protocol,
+            self.hostname.as_str(),
+            self.port,
+            QB_SET_PREFERENCES_ENDPOINT,
+        )
     }
 }
