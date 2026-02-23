@@ -1,4 +1,11 @@
-# vpn-port-forward-manager
+# VPN Port Forward Manager
+Updates the listen port for the supported applications to the port forward by the VPN provider.
+
+## Description
+VPN containers like [Gluetun](https://github.com/qdm12/gluetun/) can forward ports from a VPN provider and
+writes that forwarded port to a file.  This application monitors and reads the file and will keep the forwarded
+port up to date in the application when it changes.
+
 
 ## Environment Variables
 
@@ -33,6 +40,5 @@
 ### Deluge Default Values
 | Variable Name | Default Value |
 |---------------|---------------|
-| PORT          | `8080`        |
-| USER          | `admin`       |
+| PORT          | `8112`        |
 | PASSWORD      | blank         |
