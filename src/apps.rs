@@ -42,7 +42,7 @@ pub trait App {
 
     fn check_port_forward(&self) -> anyhow::Result<u16> {
         if !self.port_forward_path().try_exists()? {
-            warn!("Path to port forward value does nto exist");
+            warn!("Path to port forward value does not exist");
         }
         let value = std::fs::read_to_string(self.port_forward_path())?;
         debug!("{:?}", value);

@@ -24,6 +24,9 @@ fn run() -> anyhow::Result<()> {
     let app = app_init()?;
     let mut last_port = 0;
     let mut logged_in = app.login();
+    if !logged_in {
+        app.wait()
+    }
 
     loop {
         if logged_in {
