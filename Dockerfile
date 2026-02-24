@@ -24,5 +24,6 @@ RUN cp "/app/target/${DOCKER_TARGET_ARCH}-unknown-linux-musl/release/vpn-port-fo
 FROM alpine:3.23
 WORKDIR /app
 ENV PATH=/app:$PATH
+RUN apk add --no-cache tzdata
 COPY --from=builder /app/vpn-port-forward-manager /app
 CMD ["vpn-port-forward-manager"]
