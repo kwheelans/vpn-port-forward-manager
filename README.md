@@ -27,7 +27,7 @@ port up to date in the application when it changes.
 | PROTOCOL          | `http`                      |
 | HOST              | `localhost`                 |
 | PORT_FORWARD_PATH | /tmp/gluetun/forwarded_port |
-| CHECK_INTERVAL    | 20                          |
+| CHECK_INTERVAL    | 30                          |
 | LOG_LEVEL         | info                        |
 
 ### qBittorrent Default Values

@@ -26,7 +26,7 @@ const HOST_DEFAULT: &str = "localhost";
 const USER_DEFAULT: &str = "admin";
 const PASSWORD_DEFAULT: &str = "";
 const PORT_FORWARD_PATH_DEFAULT: &str = "/tmp/gluetun/forwarded_port";
-const CHECK_INTERVAL_DEFAULT: u64 = 20;
+const CHECK_INTERVAL_DEFAULT: u64 = 30;
 
 pub trait App {
     /// Attempts to log in to host and returns true if successful
@@ -42,7 +42,7 @@ pub trait App {
 
     fn check_port_forward(&self) -> anyhow::Result<u16> {
         if !self.port_forward_path().try_exists()? {
-            warn!("Path to port forward value does nto exist");
+            warn!("Path to port forward value does not exist");
         }
         let value = std::fs::read_to_string(self.port_forward_path())?;
         debug!("{:?}", value);
