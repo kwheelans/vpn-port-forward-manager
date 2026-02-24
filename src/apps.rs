@@ -26,7 +26,7 @@ const HOST_DEFAULT: &str = "localhost";
 const USER_DEFAULT: &str = "admin";
 const PASSWORD_DEFAULT: &str = "";
 const PORT_FORWARD_PATH_DEFAULT: &str = "/tmp/gluetun/forwarded_port";
-const CHECK_INTERVAL_DEFAULT: u64 = 20;
+const CHECK_INTERVAL_DEFAULT: u64 = 30;
 
 pub trait App {
     /// Attempts to log in to host and returns true if successful
