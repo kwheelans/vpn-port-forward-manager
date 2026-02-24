@@ -1,4 +1,6 @@
 # Unreleased
+
+# v0.1.1
 ## Changes
 - use local time for timestamps
 - add tzdata to docker image
