@@ -1,6 +1,6 @@
 use crate::apps::app_init;
 use std::str::FromStr;
-use tracing::{debug, error};
+use tracing::{error, trace};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::fmt::time::LocalTime;
 
@@ -37,7 +37,7 @@ fn run() -> anyhow::Result<()> {
                             last_port = port;
                         }
                     } else {
-                        debug!("Current and previous port match. No update required.")
+                        trace!("Current and previous port match. No update required.")
                     }
                 }
                 Err(error) => {

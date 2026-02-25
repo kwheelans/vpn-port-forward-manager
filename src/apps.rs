@@ -4,12 +4,13 @@ mod qbittorrent;
 use crate::LINE_FEED;
 use anyhow::Context;
 use reqwest::blocking::Client;
+use std::fmt::Debug;
 use std::path::Path;
 use std::str::FromStr;
 use std::thread::sleep;
 use std::time::Duration;
 use strum::{Display, EnumString};
-use tracing::{debug, warn};
+use tracing::{debug, trace, warn};
 
 // Environment Variables
 const APPLICATION: &str = "APPLICATION";
@@ -45,7 +46,7 @@ pub trait App {
             warn!("Path to port forward value does not exist");
         }
         let value = std::fs::read_to_string(self.port_forward_path())?;
-        debug!("{:?}", value);
+        trace!("Found port value {}", value);
         let value = value.trim_matches(LINE_FEED);
         Ok(value.parse::<u16>()?)
     }
@@ -102,6 +103,15 @@ pub fn app_init() -> anyhow::Result<Box<dyn App>> {
     let port_forward_path = std::env::var(PORT_FORWARD_PATH)
         .unwrap_or(PORT_FORWARD_PATH_DEFAULT.into())
         .into();
+
+    // Print selected values
+    debug!("application: {}", application);
+    debug!("protocol: {}", protocol);
+    debug!("port: {}", application);
+    debug!("interval: {:?}", interval);
+    debug!("hostname: {}", hostname);
+    debug!("username: {}", username);
+    debug!("port_forward_path: {:?}", port_forward_path);
 
     Ok(match application {
         Application::QBittorrent => Box::new(qbittorrent::Qbittorrent {

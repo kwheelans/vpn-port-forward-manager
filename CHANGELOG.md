@@ -1,5 +1,12 @@
 # Unreleased
 
+# v0.1.2
+## Changes
+- When setting qBittorrent port value check the expected port matches the actual set port value
+
+## Fixes
+- Fix qBittorrent port update request json value
+
 # v0.1.1
 ## Changes
 - use local time for timestamps

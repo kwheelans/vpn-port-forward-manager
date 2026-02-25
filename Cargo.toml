@@ -1,6 +1,6 @@
 [package]
 name = "vpn-port-forward-manager"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 authors = ["Kevin Wheelans <kevin.wheelans@proton.me>"]
 description = "Updates the listen port for the supported applications to the port forward by the VPN provider"
