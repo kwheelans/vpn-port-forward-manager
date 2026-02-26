@@ -2,7 +2,7 @@ mod deluge;
 mod qbittorrent;
 
 use crate::LINE_FEED;
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use reqwest::blocking::Client;
 use std::fmt::Debug;
 use std::path::Path;
@@ -42,13 +42,18 @@ pub trait App {
     }
 
     fn check_port_forward(&self) -> anyhow::Result<u16> {
-        if !self.port_forward_path().try_exists()? {
-            warn!("Path to port forward value does not exist");
+        match self.port_forward_path().try_exists()? {
+            true => {
+                let value = std::fs::read_to_string(self.port_forward_path())?;
+                trace!("Found port value {}", value);
+                let value = value.trim_matches(LINE_FEED);
+                Ok(value.parse::<u16>()?)
+            }
+            false => Err(anyhow!(
+                "Path {} does not exist",
+                self.port_forward_path().display()
+            )),
         }
-        let value = std::fs::read_to_string(self.port_forward_path())?;
-        trace!("Found port value {}", value);
-        let value = value.trim_matches(LINE_FEED);
-        Ok(value.parse::<u16>()?)
     }
 }
 
