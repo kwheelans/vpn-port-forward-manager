@@ -1,11 +1,12 @@
 use crate::apps::{App, Protocol, endpoint};
-use anyhow::{Context, anyhow};
+use crate::error::Error::{AppResponse, Authorization, ParsingFailure, PortUpdate};
+use crate::error::Result;
 use reqwest::blocking::Client;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use tracing::{debug, error, info, trace, warn};
+use tracing::{debug, info, trace};
 
 // API Endpoints
 const QB_LOGIN_ENDPOINT: &str = "/api/v2/auth/login";
@@ -24,74 +25,50 @@ pub struct Qbittorrent {
 }
 
 impl App for Qbittorrent {
-    fn login(&self) -> bool {
+    fn login(&self) -> Result<()> {
         let client = &self.client;
         let response = client
             .post(self.login_endpoint())
             .form(&self.login_parameters())
-            .send();
+            .send()?;
 
-        match response {
-            Ok(r) => {
-                let status = r.status();
-                if status.is_success() {
-                    debug!("qBitTorrent login successful");
-                    true
-                } else {
-                    error!(
-                        "qBitTorrent login request failed with status code: {}",
-                        status
-                    );
-                    false
-                }
-            }
-            Err(e) => {
-                error!("qBitTorrent login request failed: {}", e);
-                false
-            }
+        if response.status().is_success() {
+            debug!("qBitTorrent login successful");
+            Ok(())
+        } else {
+            debug!(
+                "qBitTorrent login request failed with status code: {}",
+                response.status()
+            );
+            Err(Authorization)
         }
     }
 
-    fn set_port(&self, port: u16) -> bool {
+    fn set_port(&self, port: u16) -> Result<()> {
         let client = &self.client;
         let json = HashMap::from([("json".to_string(), format!("{{\"listen_port\":{} }}", port))]);
         let response = client
             .post(self.set_preference_endpoint())
             .form(&json)
-            .send();
-        match response {
-            Ok(r) => {
-                let status = r.status();
-                if status.is_success() {
-                    let actual_port = self.get_current_listen_port();
-                    debug!("actual_port: {:?}", actual_port);
-                    match actual_port {
-                        Err(e) => {
-                            error!("unable to get actual port value: {}", e);
-                            false
-                        }
-                        Ok(actual) => {
-                            if port == actual {
-                                info!("Port updated to {}", port);
-                                true
-                            } else {
-                                error!(
-                                    "Actual port {} does not match expected port number {}",
-                                    actual, port
-                                );
-                                false
-                            }
-                        }
-                    }
-                } else {
-                    error!("Port update request failed with status code: {}", status);
-                    false
-                }
+            .send()?;
+        let status = response.status();
+        if status.is_success() {
+            let actual_port = self.get_current_listen_port()?;
+            debug!("actual_port: {:?}", actual_port);
+            if port == actual_port {
+                info!("Port updated to {}", port);
+                Ok(())
+            } else {
+                Err(PortUpdate(format!(
+                    "Actual port {} does not match expected port number {}",
+                    actual_port, port
+                )))
             }
-            Err(e) => {
-                error!("Port update request error: {}", e);
-                false
-            }
+        } else {
+            Err(AppResponse(format!(
+                "Port update request failed with status code: {}",
+                status
+            )))
         }
     }
 
@@ -139,7 +116,7 @@ impl Qbittorrent {
         )
     }
 
-    fn get_current_listen_port(&self) -> anyhow::Result<u16> {
+    fn get_current_listen_port(&self) -> Result<u16> {
         let client = &self.client;
         let response = client.get(self.get_preference_endpoint()).send()?;
 
@@ -149,18 +126,20 @@ impl Qbittorrent {
             trace!("get preference response json value: {}", json);
             Ok(json
                 .as_object()
-                .ok_or_else(|| anyhow!("unable to parse json object"))?
+                .ok_or_else(|| ParsingFailure("unable to parse preferences json object".into()))?
                 .get("listen_port")
                 .unwrap_or_default()
                 .as_number()
-                .ok_or_else(|| anyhow!("current listen port json value is not a number"))?
+                .ok_or_else(|| {
+                    ParsingFailure("current listen port json value is not a number".into())
+                })?
                 .as_u64()
                 .unwrap_or_default() as u16)
         } else {
-            Err(anyhow!(
+            Err(AppResponse(format!(
                 "get preference request failed with status code: {}",
                 status
-            ))
+            )))
         }
     }
 }

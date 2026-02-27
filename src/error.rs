@@ -25,6 +25,6 @@ pub enum Error {
     #[error("Parse Integer Error: {0}")]
     ParseInt(#[from] std::num::ParseIntError),
 
-    #[error("Reqwest Error: {0}")]
+    #[error("Reqwest Error: {0:?}")]
     Reqwest(#[from] reqwest::Error),
 }

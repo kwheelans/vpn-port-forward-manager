@@ -6,7 +6,7 @@ use reqwest::blocking::{Client};
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tracing::{debug, error, warn};
+use tracing::{debug, warn};
 
 const AUTH_METHOD: &str = "auth.login";
 const GET_HOSTS_METHOD: &str = "web.get_hosts";
