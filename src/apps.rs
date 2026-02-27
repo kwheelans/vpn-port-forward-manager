@@ -2,7 +2,8 @@ mod deluge;
 mod qbittorrent;
 
 use crate::LINE_FEED;
-use anyhow::{Context, anyhow};
+use crate::error::Error::{ParsingFailure, PortPath};
+use crate::error::Result;
 use reqwest::blocking::Client;
 use std::fmt::Debug;
 use std::path::Path;
@@ -10,7 +11,7 @@ use std::str::FromStr;
 use std::thread::sleep;
 use std::time::Duration;
 use strum::{Display, EnumString};
-use tracing::{debug, trace, warn};
+use tracing::{debug, error, trace, warn};
 
 // Environment Variables
 const APPLICATION: &str = "APPLICATION";
@@ -30,18 +31,18 @@ const PORT_FORWARD_PATH_DEFAULT: &str = "/tmp/gluetun/forwarded_port";
 const CHECK_INTERVAL_DEFAULT: u64 = 30;
 
 pub trait App {
-    /// Attempts to log in to host and returns true if successful
-    fn login(&self) -> bool;
+    /// Attempts to log in to host and returns error is unsuccessful
+    fn login(&self) -> Result<()>;
 
-    /// Attempts to set port value and returns true if successful
-    fn set_port(&self, port: u16) -> bool;
+    /// Attempts to set port value and returns error is unsuccessful
+    fn set_port(&self, port: u16) -> Result<()>;
     fn interval(&self) -> Duration;
     fn port_forward_path(&self) -> &Path;
     fn wait(&self) {
         sleep(self.interval());
     }
 
-    fn check_port_forward(&self) -> anyhow::Result<u16> {
+    fn check_port_forward(&self) -> Result<u16> {
         match self.port_forward_path().try_exists()? {
             true => {
                 let value = std::fs::read_to_string(self.port_forward_path())?;
@@ -49,10 +50,10 @@ pub trait App {
                 let value = value.trim_matches(LINE_FEED);
                 Ok(value.parse::<u16>()?)
             }
-            false => Err(anyhow!(
+            false => Err(PortPath(format!(
                 "Path {} does not exist",
                 self.port_forward_path().display()
-            )),
+            ))),
         }
     }
 }
@@ -81,11 +82,11 @@ impl Application {
     }
 }
 
-pub fn app_init() -> anyhow::Result<Box<dyn App>> {
+pub fn app_init() -> Result<Box<dyn App>> {
     let client = Client::builder().cookie_store(true).build()?;
     let application =
         Application::from_str(std::env::var(APPLICATION).unwrap_or_default().as_str())
-            .with_context(|| format!("{APPLICATION} value is not valid"))?;
+            .map_err(|_| ParsingFailure(format!("{APPLICATION} value is not valid application type")))?;
     let protocol = Protocol::from_str(std::env::var(PROTOCOL).unwrap_or_default().as_str())
         .unwrap_or_default();
     let port = match std::env::var(PORT) {
@@ -143,4 +144,14 @@ pub fn app_init() -> anyhow::Result<Box<dyn App>> {
 
 fn endpoint(protocol: Protocol, hostname: &str, port: u16, endpoint: &str) -> String {
     format!("{}://{}:{}{}", protocol, hostname, port, endpoint)
+}
+
+pub fn result_to_bool(result: Result<()>) -> bool {
+    match result {
+        Ok(_) => true,
+        Err(error) => {
+            error!("{error}");
+            false
+        }
+    }
 }

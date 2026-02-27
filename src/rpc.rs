@@ -1,3 +1,5 @@
+use crate::error::Error;
+use crate::error::Error::ParsingFailure;
 use reqwest::blocking::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -90,9 +92,17 @@ impl RpcResponse {
 }
 
 impl TryFrom<Response> for RpcResponse {
-    type Error = reqwest::Error;
+    type Error = Error;
 
     fn try_from(value: Response) -> Result<Self, Self::Error> {
-        value.json()
+        value
+            .json()
+            .map_err(|e| ParsingFailure(format!("Could not parse RpcResponse from json -> {e}")))
+    }
+}
+
+impl RpcError {
+    pub fn message(&self) -> &str {
+        &self.message
     }
 }
