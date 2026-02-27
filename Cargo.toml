@@ -17,6 +17,9 @@ thiserror = { version = "2"}
 tracing = {  version = "0.1" }
 tracing-subscriber = {  version = "0.3", features = ["local-time"]}
 
+[dev-dependencies]
+httpmock = "0.8"
+
 [profile.release]
 lto = true
 codegen-units = 1

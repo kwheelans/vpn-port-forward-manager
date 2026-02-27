@@ -91,14 +91,14 @@ pub fn app_init() -> Result<Box<dyn App>> {
         .unwrap_or_default();
     let port = match std::env::var(PORT) {
         Ok(value) => value.parse::<u16>().unwrap_or_else(|error| {
-            warn!("Could not parse: {} -> {}", value, error);
+            warn!("Using default value, could not parse: {} -> {}", value, error);
             application.default_port()
         }),
         _ => application.default_port(),
     };
     let interval = Duration::from_secs(match std::env::var(CHECK_INTERVAL) {
         Ok(value) => value.parse::<u64>().unwrap_or_else(|error| {
-            warn!("Could not parse: {} -> {}", value, error);
+            warn!("Using default value, could not parse: {} -> {}", value, error);
             CHECK_INTERVAL_DEFAULT
         }),
         _ => CHECK_INTERVAL_DEFAULT,
@@ -153,5 +153,21 @@ pub fn result_to_bool(result: Result<()>) -> bool {
             error!("{error}");
             false
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::result_to_bool;
+    use crate::error::Error::Authorization;
+    use crate::error::Result;
+
+    #[test]
+    fn result_to_bool_test() {
+        let ok: Result<()> = Ok(());
+        let error: Result<()> = Err(Authorization);
+
+        assert!(result_to_bool(ok));
+        assert!(!result_to_bool(error));
     }
 }
