@@ -1,0 +1,28 @@
+services:
+  vpn-port-forward-manager:
+    image: ghcr.io/kwheelans/vpn-port-forward-manager:latest
+    restart: unless-stopped
+    network_mode: "service:gluetun"
+    volumes:
+      - /your/path/here:/tmp/glutun
+    environment:
+      - APPLICATION=qbittorent
+      - PASSWORD=somepassword
+
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /your/path/here:/tmp/glutun
+    environment:
+      # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - VPN_TYPE=openvpn
+      - OPENVPN_USER=
+      - OPENVPN_PASSWORD=
+      - VPN_PORT_FORWARDING=on
+      - TZ=UTC
