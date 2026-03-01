@@ -27,10 +27,15 @@ pub struct Qbittorrent {
 impl App for Qbittorrent {
     fn login(&self) -> Result<()> {
         let client = &self.client;
-        let response = client
+        let request = client
             .post(self.login_endpoint())
             .form(&self.login_parameters())
-            .send()?;
+            .build()?;
+        trace!("{:?}", request);
+        trace!("{:?}",request.body());
+        println!("{:?}", request);
+        println!("{:?}",request.body());
+        let response = client.execute(request)?;
 
         if response.status().is_success() {
             debug!("qBitTorrent login successful");
@@ -142,4 +147,40 @@ impl Qbittorrent {
             )))
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use httpmock::MockServer;
+    use httpmock::prelude::POST;
+    use super::*;
+
+    #[test]
+    fn qb_login_success() {
+        let server = MockServer::start();
+        let mock = server.mock(|when ,then| {
+            when.method(POST)
+                .header("content-type", "application/x-www-form-urlencoded")
+                .path(QB_LOGIN_ENDPOINT)
+                .port(server.port())
+                .form_urlencoded_tuple("username", "someuser")
+                .form_urlencoded_tuple("password", "test123456");
+            then.status(200);
+        });
+        let app = Qbittorrent {
+            client: Client::default(),
+            protocol: Default::default(),
+            hostname: server.host(),
+            port: server.port(),
+            username: "someuser".to_string(),
+            password: "test123456".to_string(),
+            port_forward_path: Default::default(),
+            interval: Default::default(),
+        };
+        let result = app.login();
+        println!("{:?}", result);
+        mock.assert();
+        assert!(result.is_ok())
+    }
+
 }

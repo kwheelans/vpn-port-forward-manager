@@ -16,6 +16,7 @@ strum = { version = "0.28", features = ["derive"]}
 thiserror = { version = "2"}
 tracing = {  version = "0.1" }
 tracing-subscriber = {  version = "0.3", features = ["local-time"]}
+log = "0.4.29"
 
 [dev-dependencies]
 httpmock = "0.8"
