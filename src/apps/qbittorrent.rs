@@ -154,7 +154,7 @@ mod tests {
     use httpmock::prelude::POST;
 
     #[test]
-    fn qb_login() {
+    fn login() {
         const USER: &str = "someuser";
         const PASSWORD: &str = "test123456";
         let server = MockServer::start();
