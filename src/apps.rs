@@ -84,21 +84,28 @@ impl Application {
 
 pub fn app_init() -> Result<Box<dyn App>> {
     let client = Client::builder().cookie_store(true).build()?;
-    let application =
-        Application::from_str(std::env::var(APPLICATION).unwrap_or_default().as_str())
-            .map_err(|_| ParsingFailure(format!("{APPLICATION} value is not valid application type")))?;
+    let application = Application::from_str(
+        std::env::var(APPLICATION).unwrap_or_default().as_str(),
+    )
+    .map_err(|_| ParsingFailure(format!("{APPLICATION} value is not valid application type")))?;
     let protocol = Protocol::from_str(std::env::var(PROTOCOL).unwrap_or_default().as_str())
         .unwrap_or_default();
     let port = match std::env::var(PORT) {
         Ok(value) => value.parse::<u16>().unwrap_or_else(|error| {
-            warn!("Using default value, could not parse: {} -> {}", value, error);
+            warn!(
+                "Using default value, could not parse: {} -> {}",
+                value, error
+            );
             application.default_port()
         }),
         _ => application.default_port(),
     };
     let interval = Duration::from_secs(match std::env::var(CHECK_INTERVAL) {
         Ok(value) => value.parse::<u64>().unwrap_or_else(|error| {
-            warn!("Using default value, could not parse: {} -> {}", value, error);
+            warn!(
+                "Using default value, could not parse: {} -> {}",
+                value, error
+            );
             CHECK_INTERVAL_DEFAULT
         }),
         _ => CHECK_INTERVAL_DEFAULT,

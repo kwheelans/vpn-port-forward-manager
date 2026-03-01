@@ -2,7 +2,7 @@ use crate::apps::{App, Protocol, endpoint};
 use crate::error::Error::{AppResponse, Authorization};
 use crate::error::Result;
 use crate::rpc::{JsonRpcVersion, RpcId, RpcRequest, RpcResponse};
-use reqwest::blocking::{Client};
+use reqwest::blocking::Client;
 use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -40,23 +40,23 @@ impl App for Deluge {
         if !connected && self.authorize()? {
             debug!("Deluge {} method success", AUTH_METHOD);
             let hosts = self.get_hosts()?;
-                match hosts.first() {
-                    None => {
-                        warn!("Could not get Deluge Host ID");
-                        Err(Authorization)
-                    },
-                    Some(host) => {
-                        debug!("Deluge {} method success", GET_HOSTS_METHOD);
-                        self.connect(host.id.as_str())?;
-                        Ok(())
-                    }
+            match hosts.first() {
+                None => {
+                    warn!("Could not get Deluge Host ID");
+                    Err(Authorization)
                 }
+                Some(host) => {
+                    debug!("Deluge {} method success", GET_HOSTS_METHOD);
+                    self.connect(host.id.as_str())?;
+                    Ok(())
+                }
+            }
         } else {
             match connected {
                 true => {
                     debug!("Deluge is already connected");
                     Ok(())
-                },
+                }
                 false => Err(Authorization),
             }
         }
