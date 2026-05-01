@@ -1,5 +1,9 @@
 # Unreleased
 
+# v0.1.3
+## Changes
+- lock file update
+
 # v0.1.2
 ## Changes
 - When setting qBittorrent port value check the expected port matches the actual set port value
