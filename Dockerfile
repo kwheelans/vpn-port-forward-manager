@@ -21,7 +21,7 @@ RUN cargo build --release --target ${DOCKER_TARGET_ARCH}-unknown-linux-musl
 RUN cp "/app/target/${DOCKER_TARGET_ARCH}-unknown-linux-musl/release/vpn-port-forward-manager" "/app/vpn-port-forward-manager"
 
 # Final image
-FROM alpine:3.23
+FROM alpine:3.24
 WORKDIR /app
 ENV PATH=/app:$PATH
 RUN apk add --no-cache tzdata
