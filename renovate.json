@@ -7,5 +7,17 @@
     "lockFileMaintenance": {
       "enabled": false
     }
-  }
+  },
+  "packageRules": [
+    {
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "groupName": "Rust Patch Dependencies",
+      "enabled": false
+    }
+  ]
 }
