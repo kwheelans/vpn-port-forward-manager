@@ -1,6 +1,6 @@
 [package]
 name = "vpn-port-forward-manager"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 authors = ["Kevin Wheelans <kevin.wheelans@proton.me>"]
 description = "Updates the listen port for the supported applications to the port forward by the VPN provider"
@@ -18,7 +18,7 @@ tracing = {  version = "0.1" }
 tracing-subscriber = {  version = "0.3", features = ["local-time"] }
 
 [dev-dependencies]
-httpmock = "0.8"
+httpmock = "0.9"
 
 [profile.release]
 lto = true

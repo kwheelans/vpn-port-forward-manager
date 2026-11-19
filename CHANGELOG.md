@@ -1,4 +1,7 @@
 # Unreleased
+## Changes
+- Update dev-dependencies `httpmock` 
+- update lock file
 
 # v0.1.5
 ## Changes
